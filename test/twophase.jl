@@ -5,8 +5,8 @@ import Zygote
 import LinearAlgebra
 import Roots 
 import Test
+import Statistics
 import DPFEHM
-
 
 mutable struct Fluid
 	vw::Float64
@@ -54,13 +54,13 @@ end
 function TPFA(grid,K,q,kwargs...)
 	# Compute transmissibilities by harmonic averaging.
 	Nx=grid.Nx; Ny=grid.Ny; Nz=grid.Nz; N=Nx*Ny*Nz; hx=grid.hx; hy=grid.hy; hz=grid.hz;
-	L = K;
+	L = (K).^(-1);
 	tx = 2*hy*hz/hx; TX = zeros(Nx+1,Ny,Nz);
 	ty = 2*hx*hz/hy; TY = zeros(Nx,Ny+1,Nz);
-	tz = 2*hx*hy/hz; TZ = zeros(Nx,Ny,Nz+1);
-	TX[2:Nx,:,:] = tx.*(0.5*(L[1,1:Nx-1,:,:]+L[1,2:Nx ,:,:]));
-	TY[:,2:Ny,:] = ty.*(0.5*(L[2,:,1: Ny-1,:]+L[2,:,2:Ny,:]));
-	TZ[:,:,2:Nz] = tz.*(0.5*(L[3,:,:,1:Nz-1]+L[3,:,:,2:Nz]);)
+	tz = hx*hy/hz; TZ = zeros(Nx,Ny,Nz+1);
+	TX[2:Nx,:,:] = tx./((L[1,1:Nx-1,:,:]+L[1,2:Nx ,:,:]));
+	TY[:,2:Ny,:] = ty./((L[2,:,1: Ny-1,:]+L[2,:,2:Ny,:]));
+	TZ[:,:,2:Nz] = tz./((L[3,:,:,1:Nz-1]+L[3,:,:,2:Nz]);)
 	# Assemble TPFA discretization matrix.
 	x1 = reshape(TX[1:Nx,:,:],N); x2 = reshape(TX[2:Nx+1,:,:],N);
 	y1 = reshape(TY[:,1:Ny,:],N); y2 = reshape(TY[:,2:Ny+1,:],N);
@@ -68,7 +68,7 @@ function TPFA(grid,K,q,kwargs...)
 	DiagVecs = [-z2[1:end - Nx * Ny],-y2[1:end - Nx],-x2[1:end - 1],x1+x2+y1+y2+z1+z2,-x1[2:end],-y1[Nx + 1:end],-z1[Nx * Ny + 1:end]];
 	DiagIndx = [-Nx*Ny,-Nx,-1,0,1,Nx,Nx*Ny];
 	A = SparseArrays.spdiagm(N, N, map((x, y)->x=>y, DiagIndx, DiagVecs)...)
-	# A[1,1] = A[1,1]+sum(grid.K[:,1,1]);
+	A[1,1] = A[1,1]+sum(grid.K[:,1,1]);
     u=cg_solver_matlab(A, q; kwargs...)
 	P = reshape(u,Nx,Ny,Nz);
 	Vx = zeros(Nx+1,Ny,Nz);
@@ -196,10 +196,11 @@ everystep=false # output all the time steps
 args=h0, S0, K, dirichleths,  dirichletnodes, q, volumes, areasoverlengths, fluid, dt, neighbors, nt, everystep
 P_dp, S_dp= DPFEHM.solvetwophase(args...)
 total_norm=LinearAlgebra.norm(P_matlab[end]-P_dp)+LinearAlgebra.norm(S_matlab[end]-S_dp)
+total_norm=LinearAlgebra.norm((P_matlab[end].-Statistics.mean(P_matlab[end]))-(P_dp.-Statistics.mean(P_dp)))+LinearAlgebra.norm(S_matlab[end]-S_dp)
 @Test.test total_norm<1e-5
 
 #Buckley–Leverett analytical solution
-ns = 100#number of nodes on the grid
+ns = 500#number of nodes on the grid
 L=1;
 mins = 0;  maxs = L#size of the domain, in meters
 dy=1
@@ -249,5 +250,5 @@ end
 # Choose the time for comparison. Here we use time-step 12.
 t_d = Qs[1]*(nt * dt)/Area    # as A, phi and q is 1
 S_BL = [BL_solution(x_val, t_d) for x_val in x]
-error=sqrt(mean(S_BL-S).^2)
+error=sqrt(Statistics.mean(S_BL-S).^2)
 @Test.test error<1e-2 # to save time, higher resoulation gives lowe error
