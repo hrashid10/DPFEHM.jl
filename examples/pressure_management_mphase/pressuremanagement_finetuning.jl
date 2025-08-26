@@ -1,3 +1,4 @@
+#HR edit
 import DPFEHM
 import GaussianRandomFields
 import Optim
@@ -198,6 +199,6 @@ for epoch in epochs
         println(string("epoch: ", epoch," time: ",tt , " train rmse: ", rmse_train, " test rmse: ", rmse_test))
     end
 end
-@BSON.save "mytrained_model_FinalTrainMPILD.bson"  epochs  rmses_train  rmses_test 
+@BSON.save "mytrained_model_Finetuned.bson"  epochs  rmses_train  rmses_test 
 MPI.Barrier(comm)
 MPI.Finalize()

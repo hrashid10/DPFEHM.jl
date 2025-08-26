@@ -1,3 +1,4 @@
+#HR edit
 import DPFEHM
 import GaussianRandomFields
 import Random
@@ -8,7 +9,54 @@ import Flux
 import LaTeXStrings
 
 
-# #............................................comment if "model_prediction_final.bson" is available.................
+# Pressure histogram
+dict=BSON.load("model_prediction_final.bson")
+data1=dict[:pressure_vals]
+data2=dict[:extraction_rates]
+
+fig, ax = PyPlot.subplots(dpi=1200)
+ax.hist(data1; bins=250, edgecolor="black", facecolor="darkblue")
+PyPlot.xlim(-0.005, 0.005)
+ax.set_xlabel("Pressure at the critical location, MPa",
+               fontsize=15, fontname="Arial")
+ax.set_ylabel("Frequency", fontsize=15, fontname="Arial")
+# Tick labels
+for lbl in ax.get_xticklabels();  lbl.set_fontname("Arial"); lbl.set_fontsize(15); end
+for lbl in ax.get_yticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
+display(fig)
+fig.savefig("Figure6a.pdf", dpi=1200)
+close(fig)
+
+
+#Extraction-rate histogram
+
+fig, ax = PyPlot.subplots( dpi=1200)
+ax.hist(data2; bins=250, edgecolor="black", facecolor="darkblue")
+PyPlot.xlim(-0.03, 0.01)
+p50 = StatsBase.percentile(data2, 50)
+p10 = StatsBase.percentile(data2, 10)
+ax.axvline(p50, color="green", linestyle="--", label="50th percentile (median)")
+ax.axvline(p10, color="red", linestyle="--", label="10th percentile")
+ax[:set_xlabel](
+    LaTeXStrings.L"Extraction rates, $m^3\,/\,\mathrm{s}$",
+    fontsize=15,
+    fontname="Arial"
+)
+ax.set_ylabel("Frequency", fontsize=15, fontname="Arial")
+
+ticks = collect(-0.03:0.01:0.01)
+ax.set_xticks(ticks)
+
+for lbl in ax.get_xticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
+for lbl in ax.get_yticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
+ax.legend(loc="upper left",fontsize=12)
+
+display(fig)
+fig.savefig("Figure6b.pdf", dpi=1200)
+close(fig)
+
+
+# #............................................use it "model_prediction_final.bson" is not available.................
 # @BSON.load "mytrained_model_FinalTrainMPILD.bson" model
 
 
@@ -96,56 +144,6 @@ import LaTeXStrings
 # data2=extraction_rates
 # @BSON.save "model_prediction_final.bson"  pressure_vals extraction_rates
 
-#............................................comment if "model_prediction_final.bson" is available.................
-
-
-
-
-
-# Pressure histogram
-dict=BSON.load("model_prediction_final.bson")
-data1=dict[:pressure_vals]
-data2=dict[:extraction_rates]
-
-fig, ax = PyPlot.subplots(dpi=1200)
-ax.hist(data1; bins=250, edgecolor="black", facecolor="darkblue")
-PyPlot.xlim(-0.005, 0.005)
-ax.set_xlabel("Pressure at the critical location, MPa",
-               fontsize=15, fontname="Arial")
-ax.set_ylabel("Frequency", fontsize=15, fontname="Arial")
-# Tick labels
-for lbl in ax.get_xticklabels();  lbl.set_fontname("Arial"); lbl.set_fontsize(15); end
-for lbl in ax.get_yticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
-display(fig)
-fig.savefig("Figure6a.pdf", dpi=1200)
-close(fig)
-
-
-# ---- Extraction-rate histogram ----
-
-fig, ax = PyPlot.subplots( dpi=1200)
-ax.hist(data2; bins=250, edgecolor="black", facecolor="darkblue")
-PyPlot.xlim(-0.03, 0.01)
-p50 = StatsBase.percentile(data2, 50)
-p10 = StatsBase.percentile(data2, 10)
-ax.axvline(p50, color="green", linestyle="--", label="50th percentile (median)")
-ax.axvline(p10, color="red", linestyle="--", label="10th percentile")
-ax[:set_xlabel](
-    LaTeXStrings.L"Extraction rates, $m^3\,/\,\mathrm{s}$",
-    fontsize=15,
-    fontname="Arial"
-)
-ax.set_ylabel("Frequency", fontsize=15, fontname="Arial")
-
-ticks = collect(-0.03:0.01:0.01)
-ax.set_xticks(ticks)
-
-for lbl in ax.get_xticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
-for lbl in ax.get_yticklabels();  lbl.set_fontname("Arial");  lbl.set_fontsize(15); end
-ax.legend(loc="upper left",fontsize=12)
-
-display(fig)
-fig.savefig("Figure6b.pdf", dpi=1200)
-close(fig)
+##............................................use if "model_prediction_final.bson" is not available.................
 
 

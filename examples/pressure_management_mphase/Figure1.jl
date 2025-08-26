@@ -1,3 +1,4 @@
+#HR edit
 import DPFEHM
 import GaussianRandomFields
 import Random
@@ -7,7 +8,7 @@ import Flux
 
 
 
-@BSON.load "mytrained_model_FinalTrainMPILD.bson" model
+@BSON.load "mytrained_model_Finetuned.bson" model
 
 
 mutable struct Fluid_n
