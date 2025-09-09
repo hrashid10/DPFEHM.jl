@@ -104,7 +104,9 @@ function upstream( S, fluid,  Qs, T, P,Vn,neighbors,volumes)
     pm = minimum(pv ./ (Vi + fi)) # 1e-8 is for handling NAN
     # CFL time step based on saturation upstreaming
     cfl = ((1 - fluid.swc - fluid.sor) / 3) * pm
-    Nts = ceil(Int, T/cfl) 
+	Nts = ignore_derivatives() do
+        ceil(Int, T/cfl) 
+    end
     dtx = (T / Nts) ./ pv  # Time step for each cell
     for i=1:Nts
         mw, mo = relativeperm(S, fluid)
@@ -144,4 +146,5 @@ function solvetwophase(args...)
         return P, S #Return the results from the last 
     end
 end
+
 
